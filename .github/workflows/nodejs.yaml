@@ -34,7 +34,7 @@ jobs:
 
       - name: ⤴️ Export the app
         run: |
-          git remote set-url origin https://git:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+          git remote set-url origin https://git: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@github.com/itsmanibharathi/santhosh-audios-mobile-app.git
           yarn deploy -- -u "github-actions-bot <support+actions@github.com>"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
