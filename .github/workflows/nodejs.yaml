@@ -1,55 +1,46 @@
-name: build
-on: 
- push:
-  branches:
-    - master
 
+name: Web
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  
 jobs:
-  build:
-    name: EAS build
+  web:
     runs-on: ubuntu-latest
     steps:
-      - name: Check for EXPO_TOKEN
-        run: |
-          if [ -z "Yh7WuYNVZgNol9M_EmVtaa32iFSJSw98mtWLFpq_" ]; then
-            echo "You must provide an EXPO_TOKEN secret linked to this project's Expo account in this repo's secrets. Learn more: https://docs.expo.dev/eas-update/github-actions"
-            exit 1
-          fi
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: "Set ENV"
-        run: echo "$(BASE_URL)"     
-        env:
-          BASE_URL: https://exampleapp.com    
-
-      - name: Checkout repository
+      - name: ⚙️ Set up repository
         uses: actions/checkout@v2
-
-      - name: Setup Node
-        uses: actions/setup-node@v2
+      
+      - name: ❇️ Setup Node.js environment
+        uses: actions/setup-node@v3.6.0
         with:
           node-version: 16.x
-          cache: yarn
 
-      - name: Setup Expo
+      - name: 🔷 Set up Expo
         uses: expo/expo-github-action@v7
         with:
           expo-version: latest
-          eas-version: latest
-          token: "Yh7WuYNVZgNol9M_EmVtaa32iFSJSw98mtWLFpq_"
+          token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Find yarn cache
-        id: yarn-cache-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
+      - name: 📦 Install dependencies
+        run: yarn install
 
-      - name: Restore cache
-        uses: actions/cache@v2
+      - name: ⤴️ Export the app
+        run: |
+          git remote set-url origin https://git:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+          yarn deploy -- -u "github-actions-bot <support+actions@github.com>"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            
+      - name: 🚀 Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          path: "$(( steps.yarn-cache-path.outputs.dir ))"
-          key: "$(( runner.os ))-yarn-$(( hashFiles('**/yarn.lock') ))"
-          restore-keys: "$(( runner.os ))-yarn-"
-
-      - name: Install dependencies
-        run: yarn install --immutable
-
-      - name: Publish build
-        run: eas build --platform android --profile preview
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
